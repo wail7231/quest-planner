@@ -2,12 +2,11 @@
 
 /* ---------- Constants ---------- */
 const STORE_KEY = 'questPlanner.v1';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const CODE_HASHES = ['fd1d540d'];
 const XP = { main: 30, daily: 10, side: 5, habit: 5, clean: 10 };
 const FOCUS_XP = { 10: 8, 25: 15, 45: 25 };
-const TITLES = ['Rookie', 'Starter', 'Explorer', 'Pathfinder', 'Focus Knight', 'Task Ranger', 'Habit Builder',
-  'Time Keeper', 'Momentum Maker', 'Quest Master', 'Time Master', 'Legend'];
+const TITLES = RANKS.map(r => r.name);
 const SHIELD_COLORS = ['#2F6BFF', '#1FA855', '#F5A623', '#9B30D9', '#FF2D78', '#00AEEF', '#1E2433', '#FF7A00'];
 const HABIT_COLORS = ['#2F6BFF', '#1FA855', '#F5A623', '#9B30D9', '#FF2D78', '#00AEEF'];
 const REWARD_ICONS = ['device-gamepad-2', 'cup', 'coffee', 'pizza', 'ice-cream', 'device-tv', 'book', 'shopping-bag',
@@ -211,11 +210,11 @@ function levelUp(info) {
   confetti(110);
   buzz([40, 60, 40]);
   sheet(`<div class="levelup">
-    <div class="shield" style="background:${S.profile.color};margin:0 auto;width:64px;height:64px;border-radius:18px">${icon('shield')}</div>
-    <p class="sub" style="margin:14px 0 0">Level up</p>
-    <div class="big">${info.level}</div>
-    <h3>You're now a ${esc(info.title)}</h3>
-    <p class="sub">Keep the momentum going.</p>
+    <div class="emblem-pop">${rankEmblem(info.level, 150)}</div>
+    <p class="sub" style="margin:6px 0 0">Level ${info.level} · New rank unlocked</p>
+    <h3 class="rank-title">${esc(info.title)}</h3>
+    <p class="sub">${tierName(info.level)} rank. ${info.level < RANKS.length ? 'Next: ' + esc(rankFor(info.level + 1).name) + '.' : 'You reached the top.'}</p>
+    <button class="btn ghost" data-act="ranks" style="margin-bottom:8px">See all ranks</button>
     <button class="btn" data-act="close">Nice</button></div>`);
   checkBadges();
 }
@@ -260,11 +259,11 @@ function heroHTML() {
   const start = shownPct === null ? pct : shownPct;
   shownPct = pct;
   return `<div class="hero">
-    <div class="shield" style="background:${S.profile.color}">${icon('shield')}</div>
+    <button class="hero-emblem" data-act="ranks" aria-label="See all ranks">${rankEmblem(L.level, 58)}</button>
     <div class="hero-mid">
-      <div class="hero-name">Level ${L.level} · ${esc(L.title)}</div>
+      <div class="hero-name">${esc(L.title)}</div>
       <div class="bar"><i data-pct="${pct}" style="width:${start}%"></i></div>
-      <div class="hero-xp"><span>${L.into} / ${L.need} XP</span><span>${esc(S.profile.name || 'Player')}</span></div>
+      <div class="hero-xp"><span>Level ${L.level} · ${L.into} / ${L.need} XP</span><span>${esc(S.profile.name || 'Player')}</span></div>
     </div>
     <div class="streak" title="Days in a row">${icon('flame')}${activityStreak(S)}d</div>
     <button class="gear" data-act="go" data-to="settings" aria-label="Settings">${icon('settings')}</button>
@@ -427,8 +426,9 @@ function screenSettings() {
       <button class="icon-btn" data-act="go" data-to="today" aria-label="Back">${icon('arrow-left')}</button>
       <h1 class="title" style="margin:0">Settings</h1></div>
     <div class="sec">${icon('shield')} Profile</div>
+    <button class="set-row" data-act="ranks">${icon('trophy')}<span class="grow">Ranks<small>${RANKS.length} ranks from Rookie to Legend</small></span>${icon('chevron-right')}</button>
     <button class="set-row" data-act="editProfile">
-      <span class="shield" style="background:${S.profile.color};width:40px;height:40px;border-radius:12px">${icon('shield')}</span>
+      ${rankEmblem(L.level, 48)}
       <span class="grow"><b>${esc(S.profile.name || 'Player')}</b><small>Level ${L.level} · ${esc(L.title)} · ${S.xpTotal} XP total</small></span>${icon('chevron-right')}</button>
     <div class="sec">${icon('palette')} Theme</div>
     <div class="themes">${THEMES.map(th => `<button class="theme-card ${S.settings.theme === th.id ? 'on' : ''}" style="background:${th.dots[0]};color:${['night', 'arcade'].includes(th.id) ? '#F1ECFF' : '#1E2433'}" data-act="setTheme" data-id="${th.id}">
@@ -480,11 +480,9 @@ function screenOnboard() {
     <input class="field" id="obName" maxlength="24" placeholder="Alex" value="${esc(S.profile.name)}">
     <div style="margin-top:16px"><button class="btn" data-act="obNext">Next</button></div></div>`;
   if (obStep === 2) return `<div class="center">${steps}
-    <div class="shield" style="background:${S.profile.color};width:84px;height:84px;border-radius:24px;margin:0 auto 16px">${icon('shield')}</div>
-    <h1>Pick your look</h1>
-    <p class="lead">You can change these any time in Settings.</p>
-    <label class="lbl">Shield color</label>
-    <div class="pick">${SHIELD_COLORS.map(c => `<button data-act="obColor" data-c="${c}" aria-label="Color ${c}" style="border:none;padding:0"><span class="swatch ${S.profile.color === c ? 'on' : ''}" style="background:${c};display:block"></span></button>`).join('')}</div>
+    <div class="rank-preview">${[1, 4, 7, 10, 12].map(l => rankEmblem(l, 62)).join('')}</div>
+    <h1>Climb 12 ranks</h1>
+    <p class="lead">From Rookie to Legend. Every quest moves you up. Now pick a theme you can change any time.</p>
     <label class="lbl">Theme</label>
     <div class="themes">${THEMES.map(th => `<button class="theme-card ${S.settings.theme === th.id ? 'on' : ''}" style="background:${th.dots[0]};color:${['night', 'arcade'].includes(th.id) ? '#F1ECFF' : '#1E2433'}" data-act="setTheme" data-id="${th.id}">
       <span class="theme-dots">${th.dots.map(c => `<i style="background:${c};border:1px solid #8884"></i>`).join('')}</span>${th.name}</button>`).join('')}</div>
@@ -784,8 +782,17 @@ const ACTIONS = {
   toggleMotion() { S.settings.reduceMotion = !S.settings.reduceMotion; save(); render(); },
   toggleVibrate() { S.settings.vibrate = !S.settings.vibrate; save(); render(); buzz(30); },
   editProfile() {
-    simpleSheet({ title: 'Your profile', value: S.profile.name, placeholder: 'Your name', extra: colorPicker(SHIELD_COLORS, S.profile.color),
-      onSave: (v, el) => { S.profile.name = v.slice(0, 24); S.profile.color = picked(el, 'pickColor', S.profile.color); } });
+    simpleSheet({ title: 'Your profile', value: S.profile.name, placeholder: 'Your name',
+      onSave: v => { S.profile.name = v.slice(0, 24); } });
+  },
+  ranks() {
+    const L = levelInfo(S.xpTotal);
+    sheet(`<h3>Ranks</h3><p class="sub">Level up to unlock the next emblem. You have ${S.xpTotal} XP.</p>
+      ${RANKS.map((r, i) => { const lv = i + 1, got = lv <= L.level, cur = lv === L.level;
+        return `<div class="rank-row ${cur ? 'cur' : ''} ${got ? '' : 'locked'}">${rankEmblem(lv, 60, { locked: !got })}
+          <div class="grow"><b>${esc(r.name)}</b><small>Level ${lv} · ${METALS[r.metal].name}</small></div>
+          <span class="rank-state">${cur ? 'You are here' : got ? icon('check') : xpToReach(lv) + ' XP'}</span></div>`; }).join('')}
+      <button class="btn" style="margin-top:12px" data-act="close">Close</button>`);
   },
   installHelp() { sheet(`<h3>Add to home screen</h3><p class="sub">Then it opens like a normal app and works offline.</p>${installSteps()}<button class="btn" data-act="close">Got it</button>`); },
   exportData() {

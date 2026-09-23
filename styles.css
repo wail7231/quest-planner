@@ -112,6 +112,27 @@ button { cursor: pointer; border: none; background: none; padding: 0; }
 .btn + .btn { margin-top: 8px; }
 .fab-row { margin-top: 12px; }
 
+/* Ranks */
+.emblem { display: block; flex: none; filter: drop-shadow(0 3px 4px rgba(0,0,0,.18)); }
+.emblem.locked { filter: grayscale(1); opacity: .35; }
+.hero-emblem { flex: none; display: flex; margin: -6px -2px; }
+.hero-emblem:active { transform: scale(.94); }
+.emblem-pop { display: flex; justify-content: center; animation: emblemIn .7s cubic-bezier(.2,1.4,.3,1); }
+.rank-title { font-size: 26px !important; margin-top: 2px !important; }
+.rank-preview { display: flex; justify-content: center; align-items: flex-end; gap: 2px; margin-bottom: 14px; }
+.rank-preview .emblem:nth-child(3) { transform: scale(1.18); }
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 14px; margin-bottom: 4px; }
+.rank-row .grow { flex: 1; }
+.rank-row b { display: block; font-weight: 900; }
+.rank-row small { color: var(--muted); font-size: 12px; font-weight: 700; }
+.rank-row.cur { background: var(--main-bg); color: var(--main-ink); }
+.rank-row.cur small { color: var(--main-ink); }
+.rank-row.locked b { color: var(--muted); }
+.rank-state { font-size: 12px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+.rank-row.cur .rank-state { color: var(--main-ink); }
+.rank-row .rank-state .ic { color: var(--good); width: 22px; height: 22px; }
+@keyframes emblemIn { 0% { transform: scale(.2) rotate(-25deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
 /* Brain dump */
 .dump { display: flex; align-items: center; gap: 8px; margin-top: 12px; background: var(--card); border: 1.5px dashed var(--line); border-radius: 14px; padding: 6px 6px 6px 12px; }
 .dump:focus-within { border-style: solid; border-color: var(--accent); }

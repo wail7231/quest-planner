@@ -1,6 +1,6 @@
-const CACHE = 'quest-planner-v1.1.0';
+const CACHE = 'quest-planner-v1.2.0';
 const FILES = [
-  './', 'index.html', 'styles.css', 'app.js', 'icons.js', 'manifest.webmanifest',
+  './', 'index.html', 'styles.css', 'app.js', 'ranks.js', 'icons.js', 'manifest.webmanifest',
   'assets/nunito.woff2',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
 ];
