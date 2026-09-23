@@ -2,7 +2,7 @@
 
 /* ---------- Constants ---------- */
 const STORE_KEY = 'questPlanner.v1';
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const CODE_HASHES = ['fd1d540d'];
 const XP = { main: 30, daily: 10, side: 5, habit: 5, clean: 10 };
 const FOCUS_XP = { 10: 8, 25: 15, 45: 25 };
@@ -285,7 +285,7 @@ function screenToday() {
   const doneToday = S.quests.filter(q => q.done).length;
   const h = new Date().getHours();
   const hello = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-  return `${heroHTML()}
+  return `${heroHTML()}${installBanner()}
     <p class="sub" style="margin:14px 2px 0">${hello}${S.profile.name ? ', ' + esc(S.profile.name) : ''}. ${doneToday ? doneToday + ' done today.' : 'Pick one small thing to start.'}</p>
     <div class="dump">
       <span class="dump-ic">${icon('brain')}</span>
@@ -452,7 +452,7 @@ function screenSettings() {
     <button class="btn ghost" data-act="importData">${icon('upload')} Restore from backup</button>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
     <div class="sec">${icon('info-circle')} Help</div>
-    <button class="set-row" data-act="installHelp">${icon('device-mobile')}<span class="grow">Add to home screen<small>Use it like a normal app, offline</small></span>${icon('chevron-right')}</button>
+    <button class="set-row" data-act="install">${icon('device-mobile')}<span class="grow">${isStandalone() ? 'Installed' : 'Install the app'}<small>${isStandalone() ? 'Quest Planner is on your home screen' : 'Add it to your home screen. Works offline.'}</small></span>${icon('chevron-right')}</button>
     <div class="sec">${icon('trash')} Danger zone</div>
     <button class="btn danger" data-act="resetAll">Erase all my data</button>
     <p class="note">Quest Planner v${APP_VERSION} · No account, no tracking, works offline</p>`;
@@ -491,13 +491,51 @@ function screenOnboard() {
     <div class="logo">${icon('device-mobile')}</div>
     <h1>Keep it one tap away</h1>
     <p class="lead">Add Quest Planner to your home screen. It then opens like a normal app and works without internet.</p>
-    ${installSteps()}
-    <div class="btn-row"><button class="btn ghost" data-act="obBack">Back</button><button class="btn" data-act="obDone">Start playing</button></div></div>`;
+    ${isStandalone() ? `<div class="howto ok">${icon('check')} Installed. You're all set.</div>`
+      : installEvt ? `<button class="btn" data-act="install" style="margin-bottom:10px">${icon('download')} Install app</button>`
+      : installGuide()}
+    <div class="btn-row"><button class="btn ghost" data-act="obBack">Back</button><button class="btn${installEvt && !isStandalone() ? ' ghost' : ''}" data-act="obDone">${installEvt && !isStandalone() ? 'Later' : 'Start playing'}</button></div></div>`;
 }
-function installSteps() {
-  return `<div class="howto"><b>iPhone / iPad (Safari)</b>Tap the Share button, then "Add to Home Screen".</div>
-    <div class="howto"><b>Android (Chrome)</b>Tap the menu (three dots), then "Add to Home screen" or "Install app".</div>
-    <div class="howto"><b>Computer (Chrome / Edge)</b>Click the install icon at the right end of the address bar.</div>`;
+
+/* ---------- Install (Add to Home Screen) ---------- */
+let installEvt = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = () => /android/i.test(navigator.userAgent);
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (S.unlocked) render(); });
+window.addEventListener('appinstalled', () => {
+  installEvt = null; S.installed = true; save(); render();
+  toast('Installed. Open Quest Planner from your home screen.');
+});
+
+const step = (n, ic, html) => `<div class="istep"><span class="istep-n">${n}</span><div class="grow">${html}</div>${ic ? `<span class="istep-ic">${icon(ic)}</span>` : ''}</div>`;
+function guideFor(p) {
+  if (p === 'ios') return step(1, 'square-arrow-up', 'Tap the <b>Share</b> button in Safari. It is at the bottom of the screen on iPhone, top right on iPad.')
+    + step(2, 'square-plus', 'Scroll down and tap <b>Add to Home Screen</b>.')
+    + step(3, null, 'Tap <b>Add</b> in the top right corner. Done.')
+    + `<p class="row-meta" style="margin:6px 2px 0">Using Chrome on iPhone? Tap the share icon in the address bar, then Add to Home Screen.</p>`;
+  if (p === 'android') return step(1, 'dots-vertical', 'Tap the <b>menu</b> (three dots) at the top right of Chrome.')
+    + step(2, 'download', 'Tap <b>Install app</b> or <b>Add to Home screen</b>.')
+    + step(3, null, 'Tap <b>Install</b>. The app appears with your other apps.');
+  return step(1, 'download', 'In Chrome or Edge, click the <b>install icon</b> at the right end of the address bar.')
+    + step(2, null, 'Click <b>Install</b>. Quest Planner opens in its own window.');
+}
+function installGuide() {
+  const p = isIOS() ? 'ios' : isAndroid() ? 'android' : 'desktop';
+  const names = { ios: 'iPhone and iPad', android: 'Android', desktop: 'Computer' };
+  const others = ['ios', 'android', 'desktop'].filter(x => x !== p);
+  return `<div class="guide">${guideFor(p)}</div>
+    ${others.map(o => `<details class="guide-other"><summary>${names[o]}</summary><div class="guide">${guideFor(o)}</div></details>`).join('')}`;
+}
+function installBanner() {
+  if (isStandalone() || S.installed) return '';
+  if (S.installSnooze && daysBetween(S.installSnooze, dayKey()) < 3) return '';
+  return `<div class="install-card">
+    <span class="install-ic">${icon('device-mobile')}</span>
+    <div class="grow"><b>Install the app</b><small>One tap from your home screen. Works offline.</small></div>
+    <button class="install-btn" data-act="install">${installEvt ? 'Install' : 'Show me'}</button>
+    <button class="icon-btn" data-act="installLater" aria-label="Not now">${icon('x')}</button>
+  </div>`;
 }
 
 /* ---------- Render ---------- */
@@ -794,7 +832,19 @@ const ACTIONS = {
           <span class="rank-state">${cur ? 'You are here' : got ? icon('check') : xpToReach(lv) + ' XP'}</span></div>`; }).join('')}
       <button class="btn" style="margin-top:12px" data-act="close">Close</button>`);
   },
-  installHelp() { sheet(`<h3>Add to home screen</h3><p class="sub">Then it opens like a normal app and works offline.</p>${installSteps()}<button class="btn" data-act="close">Got it</button>`); },
+  async install() {
+    if (isStandalone()) { toast('Already installed'); return; }
+    if (installEvt) {
+      const evt = installEvt; installEvt = null;
+      evt.prompt();
+      const { outcome } = await evt.userChoice;
+      if (outcome !== 'accepted') toast('No problem. You can install it any time from Settings.');
+      render(); return;
+    }
+    sheet(`<h3>Install Quest Planner</h3><p class="sub">Takes 10 seconds. Then open it from your home screen, even offline.</p>
+      ${installGuide()}<button class="btn" style="margin-top:12px" data-act="close">Got it</button>`);
+  },
+  installLater() { S.installSnooze = dayKey(); save(); render(); },
   exportData() {
     const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
