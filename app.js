@@ -2,7 +2,7 @@
 
 /* ---------- Constants ---------- */
 const STORE_KEY = 'questPlanner.v1';
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 const CODE_HASHES = ['fd1d540d'];
 const XP = { main: 30, daily: 10, side: 5, habit: 5, clean: 10 };
 const FOCUS_XP = { 10: 8, 25: 15, 45: 25 };
@@ -80,8 +80,8 @@ function defaultState() {
   const task = title => ({ id: uid(), title, last: null, prev: null });
   return {
     v: 1, unlocked: false, onboarded: false, route: 'today', day: t,
-    profile: { name: '', color: '#2F6BFF' },
-    settings: { theme: 'day', autoNight: false, reduceMotion: false, vibrate: true },
+    profile: { name: '', color: '#9B30D9' },
+    settings: { theme: 'berry', autoNight: false, reduceMotion: false, vibrate: true },
     xpTotal: 0, coins: 0, xpLog: {}, bestStreak: 0,
     stats: { quests: 0, habits: 0, focus: 0, focusMin: 0, clean: 0, rewards: 0 },
     quests: [
